@@ -143,4 +143,60 @@ public class MonoTest {
 
     }
 
+    @Test
+    public void shouldMonoDoOnError() {
+        Mono<Object> error = Mono.error(new IllegalArgumentException("Illegal argument exception"))
+                .doOnError(s -> logger.error("Error message {}", s.getMessage()))
+                .doOnNext(s -> logger.info("Executing this doOnNext"))
+                .log();
+
+
+
+        StepVerifier.create(error)
+                .expectError(IllegalArgumentException.class)
+                .verify();
+
+    }
+
+    @Test
+    public void shouldMonoDoOnErrorResume() {
+        String name = "William Spader";
+
+        Mono<Object> error = Mono.error(new IllegalArgumentException("Illegal argument exception"))
+                .doOnError(s -> logger.error("Error message {}", s.getMessage()))
+                .onErrorResume(s -> {
+                    logger.info("Executing this doOnNext");
+                    return Mono.just(name);
+                })
+                .log();
+
+
+
+        StepVerifier.create(error)
+                .expectNext(name)
+                .verifyComplete();
+
+    }
+
+    @Test
+    public void shouldMonoDoOnErrorReturn() {
+        String name = "William Spader";
+
+        Mono<Object> error = Mono.error(new IllegalArgumentException("Illegal argument exception"))
+                .doOnError(s -> logger.error("Error message {}", s.getMessage()))
+                .onErrorReturn("EMPTY")
+                .onErrorResume(s -> {
+                    logger.info("Executing this doOnNext");
+                    return Mono.just(name);
+                })
+                .log();
+
+
+
+        StepVerifier.create(error)
+                .expectNext("EMPTY")
+                .verifyComplete();
+
+    }
+
 }
